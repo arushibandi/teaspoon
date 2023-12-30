@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥄</text></svg>">
+    <title>🥄 spoonfed</title>
+    <script>
+
+        window.onload = fetchFeed2();
+        async function fetchFeed2() {
+            const resp = await fetch("/feed")
+            const toJson = await resp.json()
+            console.log("resp.json() is", toJson)
+            const feed = document.getElementById("feed")
+
+
+            for (let i = 0; i < toJson.Posts.length; i++) {
+                const post = toJson.Posts[i];
+                console.log("got a post", post, i)
+
+                feed.appendChild(postDiv(post.ID, post.Note, post.Author, post.Img))
+            }
+        }
+
+        function postDiv(id, note, author, imgPath) {
+            // Create the div wrapper that will go inside the list element.
+            const newDiv = document.createElement("div")
+            // newDiv.classList.add("col-md-auto")
+            newDiv.classList.add("feed-post")
+
+            const comment = document.createComment("ID of post is " + id);
+            newDiv.appendChild(comment)
+
+            // Create the nodes with the actual content and add them to the div.
+            const noteArea = document.createElement("p")
+            noteArea.textContent = note
+            newDiv.appendChild(noteArea)
+
+            const authorHead = document.createElement("h6")
+            const authorText = document.createTextNode("posted from: " + author)
+            authorHead.appendChild(authorText)
+            newDiv.appendChild(authorHead)
+
+
+            if (imgPath !== "" && imgPath !== undefined) {
+                console.log("got image", imgPath)
+                const newImg = document.createElement("img")
+                newImg.src = imgPath
+                newDiv.appendChild(newImg)
+            }
+
+            return newDiv
+        }
+
+    </script>
+</head>
+
+<header>
+    <div class="scroll-left">
+        <p>what's up? any new rumi poems from mom? how 'bout an irish proverb from dad? kush are you there with an
+            aero-equation?</p>
+    </div>
+
+
+</header>
+
+<body>
+    <div class="nav-bar align-text-top">
+        <a class="text-decoration-none" href="/post.html">
+            <h3>🫖 add post </h3>
+        </a>
+        <a href="/index.html"><img style="height: 2.5em;" src="assets/spoonx.png"></a>
+    </div>
+    <div class="list-group" id="feed">
+    </div>
+</body>
+
+</html>
