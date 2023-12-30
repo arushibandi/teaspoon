@@ -63,21 +63,11 @@ body {
 }
 
 /* Home page background image */
-#home {
-    background-image: url("assets/bg_tsp.png");
-    background-size: cover;
-}
-
 h1,
 #title {
     font-family: YoungSerif;
     letter-spacing: -0.1rem;
     font-size: 64px;
-}
-
-
-.home-nav-elem {
-    text-align: left;
 }
 
 /* feed post styling */

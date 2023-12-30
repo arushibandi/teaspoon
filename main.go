@@ -94,7 +94,7 @@ func (s *tspServer) who(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "<a href=\"/index.html\">home</a>")
+	fmt.Fprintf(w, "<a href=\"/feed.html\">↩️ back to feed</a>")
 	fmt.Fprintf(w, "<html><body><h1>Hello, tailnet!</h1>\n")
 	fmt.Fprintf(w, "<p>You are <b>%s</b> from <b>%s</b> (%s)</p>",
 		html.EscapeString(who.UserProfile.LoginName),
@@ -105,7 +105,6 @@ func (s *tspServer) who(w http.ResponseWriter, r *http.Request) {
 func (s *tspServer) writeFile(file multipart.File, header *multipart.FileHeader, w http.ResponseWriter) (string, error) {
 	defer file.Close()
 	// Create a new file in the img directory
-	// TODO(@arushibandi): make filename work
 	imgPath := fmt.Sprintf(path.Join(s.imgPath, "%d_%s"), time.Now().UnixNano(), filepath.Ext(header.Filename))
 	dst, err := os.Create(imgPath)
 	if err != nil {
@@ -182,16 +181,15 @@ func (s *tspServer) upload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO: fix this as it doesn't work when a post has been deleted
 	id := uuid.NewString()
-
+	// Set the "author" property to the machine name.
 	who, err := s.lc.WhoIs(r.Context(), r.RemoteAddr)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	// TODO: do some validation of data.
+	// TODO(@arushibandi): do some validation of data?s
 	p := &post{
 		ID:     id,
 		Note:   req.Note,
