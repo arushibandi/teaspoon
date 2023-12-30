@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"io/fs"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -42,6 +43,61 @@ type tspServer struct {
 	postPath string
 }
 
+// Hide dot files: copied from https://pkg.go.dev/net/http#example-FileServer-DotFileHiding
+
+// containsDotFile reports whether name contains a path element starting with a period.
+// The name is assumed to be a delimited by forward slashes, as guaranteed
+// by the http.FileSystem interface.
+func containsDotFile(name string) bool {
+	parts := strings.Split(name, "/")
+	for _, part := range parts {
+		if strings.HasPrefix(part, ".") {
+			return true
+		}
+	}
+	return false
+}
+
+// dotFileHidingFile is the http.File use in dotFileHidingFileSystem.
+// It is used to wrap the Readdir method of http.File so that we can
+// remove files and directories that start with a period from its output.
+type dotFileHidingFile struct {
+	http.File
+}
+
+// Readdir is a wrapper around the Readdir method of the embedded File
+// that filters out all files that start with a period in their name.
+func (f dotFileHidingFile) Readdir(n int) (fis []fs.FileInfo, err error) {
+	files, err := f.File.Readdir(n)
+	for _, file := range files { // Filters out the dot files
+		if !strings.HasPrefix(file.Name(), ".") {
+			fis = append(fis, file)
+		}
+	}
+	return
+}
+
+// dotFileHidingFileSystem is an http.FileSystem that hides
+// hidden "dot files" from being served.
+type dotFileHidingFileSystem struct {
+	http.FileSystem
+}
+
+// Open is a wrapper around the Open method of the embedded FileSystem
+// that serves a 403 permission error when name has a file or directory
+// with whose name starts with a period in its path.
+func (fsys dotFileHidingFileSystem) Open(name string) (http.File, error) {
+	if containsDotFile(name) { // If dot file, return 403 response
+		return nil, fs.ErrPermission
+	}
+
+	file, err := fsys.FileSystem.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	return dotFileHidingFile{file}, err
+}
+
 func main() {
 	// Parse set flags, if any.
 	flag.Parse()
@@ -74,7 +130,8 @@ func main() {
 
 	// For serving the static website
 	http.Handle("/img/", http.Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("img")))))
-	http.Handle("/", http.Handler(http.FileServer(http.Dir("web"))))
+	hiddenFs := dotFileHidingFileSystem{http.Dir("web")}
+	http.Handle("/", http.Handler(http.FileServer(hiddenFs)))
 
 	// Start running the server
 	ln, err := srv.ListenTLS("tcp", *port)
@@ -94,7 +151,7 @@ func (s *tspServer) who(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "<a href=\"/feed.html\">↩️ back to feed</a>")
+	fmt.Fprintf(w, "<a href=\"/index.html\">↩️ back to feed</a>")
 	fmt.Fprintf(w, "<html><body><h1>Hello, tailnet!</h1>\n")
 	fmt.Fprintf(w, "<p>You are <b>%s</b> from <b>%s</b> (%s)</p>",
 		html.EscapeString(who.UserProfile.LoginName),

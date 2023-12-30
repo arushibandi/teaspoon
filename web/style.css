@@ -44,7 +44,7 @@ input::file-selector-button {
     background-color: #f0f1f1;
 }
 
-/* Header on feed.html / post.html */
+/* Header on index.html / post.html */
 header {
     height: 5%;
     font-family: YoungSerif;

@@ -29,7 +29,7 @@ async function newPost() {
     console.log("done")
 
     if (resp.status === 200) {
-        window.location = "/feed.html"
+        window.location = "/index.html"
     } else {
         alert("there was an issue uploading, try agian")
     }
